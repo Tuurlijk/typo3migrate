@@ -29,7 +29,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
-use TYPO3\CMS\Core\Localization\Parser\LocallangXmlParser;
 
 /**
  * Class Xml2XlfCommand
@@ -83,28 +82,51 @@ EOT
             exit;
         }
 
-        $parser = new LocallangXmlParser();
-        $data = $parser->getParsedData($xml, 'default');
+        $doc = simplexml_load_string(file_get_contents($xml));
 
-        if (!count($data)) {
-            $output->writeln('Did not find any language labels for the given language.');
-            exit;
+
+        if (!count($doc->data->languageKey)) {
+            throw new InvalidXmlFileException('Invalid .xml language file', 1545219496987);
         }
-        foreach ($data as $key => $labels) {
-            $output->writeln(sprintf('Found <info>%s</info> language labels for language <comment>%s</comment>', count($labels), $key));
+
+        $languages = $doc->data->languageKey;
+
+        $languageKeys = [];
+        foreach ($languages as $language) {
+            $languageKeys[(string)$language->attributes()->index] = $language->label;
+        }
+
+        $output->writeln(sprintf('Found <info>%s</info> languages: <comment>%s</comment>', count($languages), implode(',', array_keys($languageKeys))));
+
+        $data = [];
+        foreach ($languageKeys as $languageKey => $labels) {
+            $output->writeln(sprintf('Found <info>%s</info> language labels for language <comment>%s</comment>', count($labels), $languageKey));
+            $data[$languageKey] = [];
+            foreach ($labels as $label) {
+                $key = (string)$label->attributes()->index;
+                $label = (string)$label;
+                $data[$languageKey][$key] = $label;
+                $output->writeln(sprintf('<info>%s</info>: <comment>%s</comment>', $key, $label));
+            }
         }
 
         $pathInfo = pathinfo($xml);
-        $xlfFile = $pathInfo['dirname'] . DIRECTORY_SEPARATOR . $pathInfo['filename'] . '.xlf';
 
         $filesystem = new Filesystem();
-        try {
-            $filesystem->touch($xlfFile);
-        } catch (IOExceptionInterface $exception) {
-            echo 'An error occurred while creating the translation file at ' . $exception->getPath();
+        foreach ($data as $language => $languageData) {
+            if ($language === 'default') {
+                $xlfFile = $pathInfo['dirname'] . DIRECTORY_SEPARATOR . $pathInfo['filename'] . '.xlf';
+            } else {
+                $xlfFile = $pathInfo['dirname'] . DIRECTORY_SEPARATOR . $language . '.' . $pathInfo['filename'] . '.xlf';
+            }
+            try {
+                $filesystem->touch($xlfFile);
+            } catch (IOExceptionInterface $exception) {
+                echo 'An error occurred while creating the translation file at ' . $exception->getPath();
+            }
+            $filesystem->dumpFile($xlfFile, $this->getXlf($data, $language));
+            $output->writeln(sprintf('Wrote <comment>%s</comment> labels to: <info>%s</info>', $language, $xlfFile));
         }
-        $filesystem->dumpFile($xlfFile, $this->getXlf($data));
-        $output->writeln(sprintf('Wrote file to: <info>%s</info>', $xlfFile));
     }
 
     /**
@@ -132,18 +154,22 @@ EOT
      *
      * @param $data
      * @param $language
-     * @param array $translations
      * @return string
      */
-    protected function getXlf($data, $language = 'default', $translations = array())
+    protected function getXlf($data, $language = 'default'): string
     {
+        $isTranslation = false;
+        if ($language !== 'default') {
+            $isTranslation = true;
+        }
+
         $xml = new \DOMDocument('1.0', 'utf-8');
         $xliff = $xml->createElement('xliff');
         $xliff->setAttribute('version', '1.0');
         $xliff->setAttribute('standalone', 'yes');
         $file = $xml->createElement('file');
         $file->setAttribute('source-language', 'en');
-        if (func_num_args() > 2) {
+        if ($isTranslation) {
             $file->setAttribute('target-language', $language);
         }
         $file->setAttribute('datatype', 'plaintext');
@@ -153,15 +179,20 @@ EOT
         $header = $xml->createElement('header');
         $file->appendChild($header);
         $body = $xml->createElement('body');
-        foreach ($data[$language] as $key => $values) {
+        foreach ($data[$language] as $key => $value) {
             $unit = $xml->createElement('trans-unit');
             $unit->setAttribute('id', $key);
             $unit->setAttribute('xml:space', 'preserve');
-            $source = $xml->createElement('source', $values[0]['source']);
-            $unit->appendChild($source);
-            if (func_num_args() > 2) {
-                $target = $xml->createElement('target', $translations[$key]);
+            if ($isTranslation) {
+                if (array_key_exists($key, $data['default'])) {
+                    $source = $xml->createElement('source', htmlspecialchars($data['default'][$key]));
+                    $unit->appendChild($source);
+                }
+                $target = $xml->createElement('target', htmlspecialchars($data[$language][$key]));
                 $unit->appendChild($target);
+            } else {
+                $source = $xml->createElement('source', htmlspecialchars($data[$language][$key]));
+                $unit->appendChild($source);
             }
             $body->appendChild($unit);
         }

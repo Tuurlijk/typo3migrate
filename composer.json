@@ -19,9 +19,7 @@
     },
     "autoload": {
         "psr-4": {
-            "MichielRoos\\TYPO3Migrate\\": "src/TYPO3Migrate",
-            "TYPO3\\CMS\\Core\\Utility\\": "src/TYPO3/Utility",
-            "TYPO3\\CMS\\Core\\Localization\\Parser\\": "src/TYPO3/Parser"
+            "MichielRoos\\TYPO3Migrate\\": "src/TYPO3Migrate"
         }
     },
     "autoload-dev": {
