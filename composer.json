@@ -11,11 +11,8 @@
     ],
     "require": {
         "php": "^5.6 || ^7.0",
-        "symfony/process": "^3.4",
-        "symfony/finder": "^3.4",
-        "symfony/console": "^3.4",
-        "symfony/debug": "^3.4",
-        "symfony/filesystem": "^3.4"
+        "symfony/console": "^2.8 || ^3.4",
+        "symfony/filesystem": "^2.8 || ^3.4"
     },
     "autoload": {
         "psr-4": {

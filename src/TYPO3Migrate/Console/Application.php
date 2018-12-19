@@ -45,9 +45,9 @@ class Application extends BaseApplication
 /_/  /_/_/\__, /_/   \__,_/\__/_/\____/_/ /_/    /_/  \____/\____/_/____/  
          /____/                                                            
 
-        https://github.com/tuurlijk/typo3migrate
+              https://github.com/tuurlijk/typo3migrate
 
-          Hand coded with %s️ by Michiel Roos 
+                Hand coded with %s️ by Michiel Roos 
 
 ";
 
