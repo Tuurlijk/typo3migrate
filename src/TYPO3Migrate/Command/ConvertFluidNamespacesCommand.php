@@ -46,12 +46,12 @@ class ConvertFluidNamespacesCommand extends Command
     {
         $this
             ->setName('fluidNsToHtml')
-            ->setDescription('Convert old Fluid namespaces (brace style) to html tag with attributes')
+            ->setDescription('Convert old Fluid namespaces (curly brace style) to html tag with attributes')
             ->setDefinition([
                 new InputArgument('template', InputArgument::REQUIRED, 'File to convert')
             ])
             ->setHelp(<<<EOT
-The <info>fluidNsToHtml</info> command converts old Fluid namespaces (brace style) to html tag with attributes.
+The <info>fluidNsToHtml</info> command converts old Fluid namespaces (curly brace style) to html tag with attributes.
 
 Convert a file:
 <info>php typo3migrate.phar fluidNsToHtml ~/tmp/Partials/Template.html</info>

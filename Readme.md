@@ -23,8 +23,29 @@ composer require --update-no-dev  "michielroos/typo3migrate:*"
 ## Usage
 Current tools:
 * xml2xlf
+* fluidNsToHtml
 ### Convert xml to xlf
 Convert a xmllang file to xlf.
 ```bash
 php ./typo3migrate.phar xml2xlf ~/tmp/localllang_db.xml
+```
+### Convert old Fluid namespaces
+Convert old Fluid namespaces {brace style} to html tag with attributes.
+```html
+{namespace f=TYPO3\CMS\Fluid\ViewHelpers}
+<section>
+</section>
+
+```
+Will become:
+```html
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+	  data-namespace-typo3-fluid="true">
+<section>
+</section>
+</html>
+```
+Command:
+```bash
+php ./typo3migrate.phar fluidNsToHtml ~/tmp/Template.html
 ```
