@@ -9,7 +9,7 @@ Then please consider a sponsorship so I can make this tool even more awesome!
 Thank you! ♥
 
 ## Requirements
-The tool requires **PHP 7.0** or higher to run. Why? *Because this tool was written in 2018!* Still running that old site on PHP 5.6? Move your extensions over to a system with PHP 7.0+ to scan them.
+The tool requires **PHP 5.6** or higher to run.
 
 ## Installation
 Download the latest version from: https://github.com/Tuurlijk/typo3migrate/releases
