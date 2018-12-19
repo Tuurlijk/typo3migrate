@@ -33,5 +33,6 @@ foreach ([__DIR__ . '/../../../autoload.php', __DIR__ . '/../../../../autoload.p
 use MichielRoos\TYPO3Migrate\Console\Application;
 
 $app = new Application('TYPO3Migrate', '1.5.2');
+$app->add(new \MichielRoos\TYPO3Migrate\Command\ConvertFluidNamespacesCommand());
 $app->add(new \MichielRoos\TYPO3Migrate\Command\Xml2XlfCommand());
 $app->run();

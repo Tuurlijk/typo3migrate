@@ -51,7 +51,7 @@ class Xml2XlfCommand extends Command
                 new InputArgument('xml', InputArgument::REQUIRED, 'File to convert')
             ])
             ->setHelp(<<<EOT
-The <info>xml2xlf</info> command converts a T3locallang file to Xliff</info>.
+The <info>xml2xlf</info> command converts a T3locallang file to Xliff.
 
 Convert a file:
 <info>php typo3migrate.phar xml2xlf ~/tmp/source/locallang.xml</info>
@@ -123,6 +123,7 @@ EOT
                 $filesystem->touch($xlfFile);
             } catch (IOExceptionInterface $exception) {
                 echo 'An error occurred while creating the translation file at ' . $exception->getPath();
+                exit;
             }
             $filesystem->dumpFile($xlfFile, $this->getXlf($data, $language));
             $output->writeln(sprintf('Wrote <comment>%s</comment> labels to: <info>%s</info>', $language, $xlfFile));
