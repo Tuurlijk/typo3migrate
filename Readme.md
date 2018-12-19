@@ -49,3 +49,7 @@ Command:
 ```bash
 php ./typo3migrate.phar fluidNsToHtml ~/tmp/Template.html
 ```
+Or in a loop:
+```bash
+for f in `find ./tmp/Templates/ -name '*.html'`; do ./bin/typo3migrate fluidNsToHtml $f; done
+```
