@@ -24,6 +24,11 @@
             "TYPO3\\CMS\\Core\\Localization\\Parser\\": "src/TYPO3/Parser"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "MichielRoos\\TYPO3Migrate\\Tests\\": "src/TYPO3Migrate/Tests"
+        }
+    },
     "bin": ["bin/typo3migrate"],
     "config": {
         "bin-dir": "bin",
@@ -31,7 +36,26 @@
         "preferred-install": "dist"
     },
     "require-dev": {
-        "phpunit/phpunit": "^7",
+        "phpunit/phpunit": "^6",
         "roave/security-advisories": "dev-master"
+    },
+    "scripts": {
+        "ci:php:lint": "find src/ -name '*.php' -print0 | xargs -0 -n 1 -P 4 php -l",
+        "ci:tests:unit": "phpunit ./src/Tests/Unit/",
+        "ci:tests:integration": "phpunit ./src/Tests/Integration/",
+        "ci:tests": [
+            "@ci:tests:unit",
+            "@ci:tests:integration"
+        ],
+        "ci:static": [
+            "@ci:php:lint"
+        ],
+        "ci:dynamic": [
+            "@ci:tests"
+        ],
+        "ci": [
+            "@ci:static",
+            "@ci:dynamic"
+        ]
     }
 }
