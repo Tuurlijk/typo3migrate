@@ -39,7 +39,7 @@ Convert old Fluid namespaces {brace style} to html tag with attributes.
 ```
 Will become:
 ```html
-<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+<html xmlns:f="https://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
 	  data-namespace-typo3-fluid="true">
 <section>
 </section>
