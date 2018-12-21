@@ -29,6 +29,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 
 /**
  * Class ConvertFluidNamespacesCommand
@@ -48,7 +49,7 @@ class ConvertFluidNamespacesCommand extends Command
             ->setName('fluidNsToHtml')
             ->setDescription('Convert old Fluid namespaces (curly brace style) to html tag with attributes')
             ->setDefinition([
-                new InputArgument('template', InputArgument::REQUIRED, 'File to convert')
+                new InputArgument('target', InputArgument::REQUIRED, 'File or directory to convert')
             ])
             ->setHelp(<<<EOT
 The <info>fluidNsToHtml</info> command converts old Fluid namespaces (curly brace style) to html tag with attributes.
@@ -76,13 +77,36 @@ EOT
             $stdErr = $output->getErrorOutput();
         }
 
-        $template = realpath($input->getArgument('template'));
-        if (!is_file($template)) {
-            $stdErr->writeln(sprintf('File does not exist: "%s"', $template));
+        $target = realpath($input->getArgument('target'));
+        if (!is_file($target) && !is_dir($target)) {
+            $stdErr->writeln(sprintf('Path does not exist: "%s"', $target));
             exit;
         }
 
-        $lines = file($template);
+        if (is_dir($target)) {
+            $templateFinder = new Finder();
+            $templateList = $templateFinder->files()->in($target)->name('*.html');
+            /** @var \SplFileInfo $templateFile */
+            foreach ($templateList as $templateFile) {
+                $this->convertFile($templateFile->getPathname(), $input, $output);
+            }
+        } elseif (is_file($target)) {
+            $this->convertFile($target, $input, $output);
+        }
+    }
+
+    /**
+     * Convert a file
+     *
+     * @param string $target
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     *
+     * @return void|int
+     */
+    protected function convertFile($target, InputInterface $input, OutputInterface $output)
+    {
+        $lines = file($target);
 
         $hasOldNamespaces = false;
         $namespaces = [];
@@ -98,23 +122,24 @@ EOT
 
         $hasHtmlTag = false;
         foreach ($contentLines as $contentLine) {
-            if (trim($contentLine) === '') {
+            $contentLine = trim($contentLine);
+            if ($contentLine === '') {
                 continue;
             }
-            if (preg_match('/\s*<html.*/', $line)) {
+            if (preg_match('/\s*<html.*/', $contentLine)) {
                 $hasHtmlTag = true;
                 break;
             }
         }
 
-        if (!$hasOldNamespaces) {
+        if (!$hasOldNamespaces && $hasHtmlTag) {
             $output->writeln(sprintf('Found <info>%s</info> old namespaces', 0));
-            exit;
+            return;
         }
 
         if ($hasOldNamespaces && $hasHtmlTag) {
             $output->writeln('Found old namespaces but also a html tag. Please investigate.');
-            exit;
+            return;
         }
 
         $output->writeln(sprintf('Found <info>%s</info> old namespaces:', count($namespaces)));
@@ -122,12 +147,12 @@ EOT
             $output->writeln(sprintf('- <comment>%s</comment>', $namespace));
         }
 
-        $htmlTag = '<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"' . PHP_EOL;
+        $htmlTag = '<html xmlns:f="https://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"' . PHP_EOL;
         foreach ($namespaces as $namespace) {
             $namespace = trim($namespace, '{}');
             $namespace = preg_replace('/^namespace\s+([^ ]*)/', '$1', $namespace);
             list($key, $class) = explode('=', $namespace);
-            $htmlTag .= sprintf("\t  xmlns:%s=\"http://typo3.org/ns/%s\"" . PHP_EOL, $key, str_replace('\\', '/', $class));
+            $htmlTag .= sprintf("\t  xmlns:%s=\"https://typo3.org/ns/%s\"" . PHP_EOL, $key, str_replace('\\', '/', $class));
         }
         $htmlTag .= '	  data-namespace-typo3-fluid="true">' . PHP_EOL;
 
@@ -135,12 +160,12 @@ EOT
 
         $filesystem = new Filesystem();
         try {
-            $filesystem->touch($template);
+            $filesystem->touch($target);
         } catch (IOExceptionInterface $exception) {
             echo 'An error occurred while creating the template file at ' . $exception->getPath();
-            exit;
+            return;
         }
-        $filesystem->dumpFile($template, $newTemplate);
-        $output->writeln(sprintf('Wrote template data to: <info>%s</info>', $template));
+        $filesystem->dumpFile($target, $newTemplate);
+        $output->writeln(sprintf('Wrote template data to: <info>%s</info>', $target));
     }
 }

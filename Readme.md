@@ -45,11 +45,11 @@ Will become:
 </section>
 </html>
 ```
-Command:
+Convert a single file:
 ```bash
 php ./typo3migrate.phar fluidNsToHtml ~/tmp/Template.html
 ```
-Or in a loop:
+Or all files in a folder:
 ```bash
-for f in `find ./tmp/Templates/ -name '*.html'`; do ./bin/typo3migrate fluidNsToHtml $f; done
+php ./typo3migrate.phar fluidNsToHtml ~/tmp/Templates/
 ```
