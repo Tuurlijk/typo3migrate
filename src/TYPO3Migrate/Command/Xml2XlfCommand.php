@@ -111,6 +111,7 @@ EOT
         }
 
         $pathInfo = pathinfo($xml);
+        $productName = $this->getExtKeyFromPath($xml);
 
         $filesystem = new Filesystem();
         foreach ($data as $language => $languageData) {
@@ -125,7 +126,7 @@ EOT
                 echo 'An error occurred while creating the translation file at ' . $exception->getPath();
                 exit;
             }
-            $filesystem->dumpFile($xlfFile, $this->getXlf($data, $language));
+            $filesystem->dumpFile($xlfFile, $this->getXlf($data, $language, $productName));
             $output->writeln(sprintf('Wrote <comment>%s</comment> labels to: <info>%s</info>', $language, $xlfFile));
         }
     }
@@ -157,7 +158,7 @@ EOT
      * @param $language
      * @return string
      */
-    protected function getXlf($data, $language = 'default'): string
+    protected function getXlf($data, $language = 'default', $productName = 'typo3migrate')
     {
         $isTranslation = false;
         if ($language !== 'default') {
@@ -176,7 +177,7 @@ EOT
         $file->setAttribute('datatype', 'plaintext');
         $file->setAttribute('original', 'messages');
         $file->setAttribute('data', strftime('%Y-%m-%dT%H-%M-%S'));
-        $file->setAttribute('product-name', 'typo3migration');
+        $file->setAttribute('product-name', $productName);
         $header = $xml->createElement('header');
         $file->appendChild($header);
         $body = $xml->createElement('body');
@@ -202,5 +203,24 @@ EOT
         $xml->appendChild($xliff);
         $xml->formatOutput = true;
         return $xml->saveXML();
+    }
+
+    /**
+     * Return the extension key from the path
+     *
+     * @param $path
+     * @return string
+     */
+    protected function getExtKeyFromPath($path)
+    {
+        $extensionName = '';
+        while ($dir = basename($path)) {
+            if ($dir === 'ext') {
+                return $extensionName;
+            }
+            $extensionName = $dir;
+            $path = \dirname($path);
+        }
+        return $extensionName;
     }
 }
