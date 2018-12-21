@@ -147,12 +147,12 @@ EOT
             $output->writeln(sprintf('- <comment>%s</comment>', $namespace));
         }
 
-        $htmlTag = '<html xmlns:f="https://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"' . PHP_EOL;
+        $htmlTag = '<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"' . PHP_EOL;
         foreach ($namespaces as $namespace) {
             $namespace = trim($namespace, '{}');
             $namespace = preg_replace('/^namespace\s+([^ ]*)/', '$1', $namespace);
             list($key, $class) = explode('=', $namespace);
-            $htmlTag .= sprintf("\t  xmlns:%s=\"https://typo3.org/ns/%s\"" . PHP_EOL, $key, str_replace('\\', '/', $class));
+            $htmlTag .= sprintf("\t  xmlns:%s=\"http://typo3.org/ns/%s\"" . PHP_EOL, $key, str_replace('\\', '/', $class));
         }
         $htmlTag .= '	  data-namespace-typo3-fluid="true">' . PHP_EOL;
 
