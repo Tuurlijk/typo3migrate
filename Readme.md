@@ -29,6 +29,10 @@ Convert a xmllang file to xlf.
 ```bash
 php ./typo3migrate.phar xml2xlf ~/tmp/localllang_db.xml
 ```
+Or all files in a folder:
+```bash
+php ./typo3migrate.phar xml2xlf ~/tmp/Language
+```
 ### Convert old Fluid namespaces
 Convert old Fluid namespaces {brace style} to html tag with attributes.
 ```html

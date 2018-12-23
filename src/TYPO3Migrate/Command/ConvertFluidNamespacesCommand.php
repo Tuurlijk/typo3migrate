@@ -57,6 +57,9 @@ The <info>fluidNsToHtml</info> command converts old Fluid namespaces (curly brac
 Convert a file:
 <info>php typo3migrate.phar fluidNsToHtml ~/tmp/Partials/Template.html</info>
 
+Convert a directory:
+<info>php typo3migrate.phar fluidNsToHtml ~/tmp/Partials</info>
+
 EOT
             );
     }
@@ -166,6 +169,6 @@ EOT
             return;
         }
         $filesystem->dumpFile($target, $newTemplate);
-        $output->writeln(sprintf('Wrote template data to: <info>%s</info>', $target));
+        $output->writeln(sprintf('Wrote template data to: <info>%s</info>', basename($target)));
     }
 }

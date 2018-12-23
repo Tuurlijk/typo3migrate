@@ -29,6 +29,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 
 /**
  * Class Xml2XlfCommand
@@ -48,13 +49,16 @@ class Xml2XlfCommand extends Command
             ->setName('xml2xlf')
             ->setDescription('Convert T3locallang files to Xliff')
             ->setDefinition([
-                new InputArgument('xml', InputArgument::REQUIRED, 'File to convert')
+                new InputArgument('target', InputArgument::REQUIRED, 'File or directory to convert')
             ])
             ->setHelp(<<<EOT
 The <info>xml2xlf</info> command converts a T3locallang file to Xliff.
 
 Convert a file:
 <info>php typo3migrate.phar xml2xlf ~/tmp/source/locallang.xml</info>
+
+Convert a directory:
+<info>php typo3migrate.phar fluidNsToHtml ~/tmp/Language</info>
 
 EOT
             );
@@ -76,14 +80,37 @@ EOT
             $stdErr = $output->getErrorOutput();
         }
 
-        $xml = realpath($input->getArgument('xml'));
-        if (!is_file($xml)) {
-            $stdErr->writeln(sprintf('File does not exist: "%s"', $xml));
+        $target = realpath($input->getArgument('target'));
+        if (!is_file($target) && !is_dir($target)) {
+            $stdErr->writeln(sprintf('Path does not exist: "%s"', $target));
             exit;
         }
 
-        $doc = simplexml_load_string(file_get_contents($xml));
+        if (is_dir($target)) {
+            $finder = new Finder();
+            $fileList = $finder->files()->in($target)->name('*.xml');
+            /** @var \SplFileInfo $fileInfo */
+            foreach ($fileList as $fileInfo) {
+                $stdErr->writeln(sprintf('Converting: <info>%s</info>', $fileInfo->getFilename()));
 
+                $this->convertFile($fileInfo->getPathname(), $input, $output);
+            }
+        } elseif (is_file($target)) {
+            $this->convertFile($target, $input, $output);
+        }
+
+    }
+
+    /**
+     * Convert a language file to xlf
+     *
+     * @param $target
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
+    protected function convertFile($target, InputInterface $input, OutputInterface $output)
+    {
+        $doc = simplexml_load_string(file_get_contents($target));
 
         if (!count($doc->data->languageKey)) {
             throw new InvalidXmlFileException('Invalid .xml language file', 1545219496987);
@@ -106,12 +133,12 @@ EOT
                 $key = (string)$label->attributes()->index;
                 $label = (string)$label;
                 $data[$languageKey][$key] = $label;
-                $output->writeln(sprintf('<info>%s</info>: <comment>%s</comment>', $key, $label));
+                $output->writeln(sprintf('%s: <comment>%s</comment>', $key, $label));
             }
         }
 
-        $pathInfo = pathinfo($xml);
-        $productName = $this->getExtKeyFromPath($xml);
+        $pathInfo = pathinfo($target);
+        $productName = $this->getExtKeyFromPath($target);
 
         $filesystem = new Filesystem();
         foreach ($data as $language => $languageData) {
@@ -127,32 +154,26 @@ EOT
                 exit;
             }
             $filesystem->dumpFile($xlfFile, $this->getXlf($data, $language, $productName));
-            $output->writeln(sprintf('Wrote <comment>%s</comment> labels to: <info>%s</info>', $language, $xlfFile));
+            $output->writeln(sprintf('Wrote <comment>%s</comment> labels to: <info>%s</info>', $language, basename($xlfFile)));
         }
     }
 
     /**
      *
      * <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-     *     <xliff version="1.0">
+     * <xliff version="1.0">
      *     <file source-language="en" datatype="plaintext" original="messages" date="2013-02-21T01:52:55Z" product-name="static_info_tables">
-     *     <header/>
-     *     <body>
-     *     <trans-unit id="m_default" xml:space="preserve">
-     *     <source>default</source>
-     *     </trans-unit>
-     *     <trans-unit id="m_ext" xml:space="preserve">
-     *     <source>extended</source>
-     *     </trans-unit>
-     *     <trans-unit id="m_country" xml:space="preserve">
-     *     <source>country</source>
-     *     </trans-unit>
-     *     <trans-unit id="m_other" xml:space="preserve">
-     *     <source>other</source>
-     *     </trans-unit>
-     *     </body>
+     *         <header/>
+     *         <body>
+     *             <trans-unit id="m_default" xml:space="preserve">
+     *                 <source>default</source>
+     *             </trans-unit>
+     *             <trans-unit id="m_ext" xml:space="preserve">
+     *                 <source>extended</source>
+     *             </trans-unit>
+     *         </body>
      *     </file>
-     *     </xliff>
+     * </xliff>
      *
      * @param $data
      * @param $language
